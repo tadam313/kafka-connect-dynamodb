@@ -3,7 +3,6 @@ package app.tier.kafka.transforms
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.data.Struct
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import java.util.function.Function
 import java.util.stream.Collectors
 
 object DynamoDBAttributeUtil {
@@ -37,7 +36,7 @@ object DynamoDBAttributeUtil {
     fun toAttributeValue(value: Any?, schema: Schema): AttributeValue {
         if (value == null) return attr().nul(true).build()
         if (schema.type() == Schema.Type.STRING) return attr().s(value as String).build()
-        if (numberSchemaTypes.contains(schema.type())) return attr().n(value as String) .n(value.toString()).build()
+        if (numberSchemaTypes.contains(schema.type())) return attr().n(value.toString()).n(value.toString()).build()
         if (schema.type() == Schema.Type.BOOLEAN) return attr().bool(value as Boolean).build()
         if (schema.type() == Schema.Type.MAP) return attr().m(fromMap(value as Map<String, Any>)).build()
         if (schema.type() == Schema.Type.STRUCT) return attr().m(fromStruct(value as Struct)).build()

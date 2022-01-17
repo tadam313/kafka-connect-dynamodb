@@ -4,16 +4,28 @@ import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.data.Struct
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
-class FieldTransformation(private val fieldConfig: String) {
-    val fieldName = fieldConfig.substringBefore(".*")
-    private val flatten = fieldConfig.endsWith(".*")
+class FieldTransformation(config: String) {
+    val fieldName: String
+    private val flatten = config.endsWith(".*")
+    private val destinationFieldName: String
+
+    init {
+        val fieldConfig = config.substringBefore(".*").split(":")
+
+        if (fieldConfig.size > 2) {
+            throw IllegalArgumentException("Field format: {field_name} or {header_field:record_field}")
+        }
+
+        destinationFieldName = fieldConfig.first()
+        fieldName = fieldConfig.last()
+    }
 
     @Suppress("UNCHECKED_CAST")
     fun <T> apply(value: T, writeTo: MutableMap<String, AttributeValue>) {
         if (flatten && value is Map<*, *>) {
             writeTo.putAll(DynamoDBAttributeUtil.fromMap(value as Map<String, Any>))
         } else {
-            writeTo[fieldName] = DynamoDBAttributeUtil.toAttributeValue(value)
+            writeTo[destinationFieldName] = DynamoDBAttributeUtil.toAttributeValue(value)
         }
     }
 
@@ -21,7 +33,7 @@ class FieldTransformation(private val fieldConfig: String) {
         if (flatten && value is Struct) {
             writeTo.putAll(DynamoDBAttributeUtil.fromStruct(value))
         } else {
-            writeTo[fieldName] = DynamoDBAttributeUtil.toAttributeValue(value, schema)
+            writeTo[destinationFieldName] = DynamoDBAttributeUtil.toAttributeValue(value, schema)
         }
     }
 }
