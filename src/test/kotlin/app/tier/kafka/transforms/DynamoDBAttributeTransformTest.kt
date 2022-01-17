@@ -53,12 +53,11 @@ internal class DynamoDBAttributeTransformTest {
                 "test_num" to attr().n("1").build(),
                 "test_string" to attr().s("test").build(),
             )).build(),
-            "test_number" to attr().n("23").build()
+            "test_number" to attr().n("23").build(),
+            "test_str" to attr().s("test").build()
         )
 
         val record = SinkRecord("test", 0, null, "test", null, testValue, 0)
-
-        attributeTransformer.configure(mutableMapOf("fields" to "test_map,test_number"))
         val actual = attributeTransformer.apply(record).headers().lastWithName(DEFAULT_HEADER)
 
         assertEquals(expected, actual.value())
@@ -122,7 +121,7 @@ internal class DynamoDBAttributeTransformTest {
     }
 
     @Test
-    fun `test field rename`() {
+    fun `test field remapping`() {
         val testValue = givenTestDataWithSchema()
         val record = SinkRecord("test", 0, null, "test", testValue.schema(), testValue, 0)
 
@@ -131,6 +130,25 @@ internal class DynamoDBAttributeTransformTest {
 
         val expected = mapOf(
             "number_new" to attr().n("13").build()
+        )
+
+        assertEquals(expected, actual.value())
+        assertNull(actual.schema())
+    }
+
+    @Test
+    fun `test empty field config with schema`() {
+        val testValue = givenTestDataWithSchema()
+        val record = SinkRecord("test", 0, null, "test", testValue.schema(), testValue, 0)
+
+        val actual = attributeTransformer.apply(record).headers().lastWithName(DEFAULT_HEADER)
+
+        val expected = mapOf(
+            "test_struct" to attr().m(mapOf(
+                "test_boolean" to AttributeValue.builder().bool(false).build(),
+            )).build(),
+            "test_string" to attr().s("test").build(),
+            "test_number" to attr().n("13").build()
         )
 
         assertEquals(expected, actual.value())

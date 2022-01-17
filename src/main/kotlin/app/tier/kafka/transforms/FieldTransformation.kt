@@ -36,4 +36,9 @@ class FieldTransformation(config: String) {
             writeTo[destinationFieldName] = DynamoDBAttributeUtil.toAttributeValue(value, schema)
         }
     }
+
+    companion object {
+        fun fromSchema(schema: Schema) = schema.fields().map { FieldTransformation(it.name()) }
+        fun <T> fromMap(map: Map<String, T>) = map.keys.map { FieldTransformation(it) }
+    }
 }

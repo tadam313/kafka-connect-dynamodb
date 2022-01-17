@@ -17,8 +17,8 @@ abstract class DynamoDBAttributeTransform<R: ConnectRecord<R>>: Transformation<R
     private lateinit var headerName: String
 
     private var configDef =  ConfigDef()
-        .define("fields", ConfigDef.Type.LIST, Collections.emptyList<String>(), ConfigDef.Importance.HIGH,
-            "Fields to transform to dynamo attribute descriptors ('field_name.*' to flatten maps / structs)")
+        .define("fields", ConfigDef.Type.LIST, Collections.emptyList<String>(), ConfigDef.Importance.MEDIUM,
+            "Fields to transform to dynamo attribute descriptors ('field_name.*' to flatten maps / structs, new_name:name to remap field names)")
         .define("header", ConfigDef.Type.STRING, DEFAULT_HEADER, ConfigDef.Importance.MEDIUM,
             "Header to put the dynamo item descriptor")
 
@@ -55,10 +55,11 @@ abstract class DynamoDBAttributeTransform<R: ConnectRecord<R>>: Transformation<R
 
     private fun applySchemaLess(record: R): Map<String, AttributeValue>? {
         val recordMap = Requirements.requireMapOrNull(operatingValue(record), PURPOSE) ?: return null
-
         val headerMap = mutableMapOf<String, AttributeValue>()
 
-        fields.forEach { transformation ->
+        val transformations = fields.ifEmpty { FieldTransformation.fromMap(recordMap) }
+
+        transformations.forEach { transformation ->
             transformation.apply(recordMap[transformation.fieldName], headerMap)
         }
 
@@ -69,7 +70,9 @@ abstract class DynamoDBAttributeTransform<R: ConnectRecord<R>>: Transformation<R
         val struct = Requirements.requireStructOrNull(operatingValue(record), PURPOSE) ?: return null
         val headerMap = mutableMapOf<String, AttributeValue>()
 
-        fields.forEach { transformation ->
+        val transformations = fields.ifEmpty { FieldTransformation.fromSchema(schema) }
+
+        transformations.forEach { transformation ->
             transformation.apply(
                 struct[transformation.fieldName],
                 schema.field(transformation.fieldName).schema(),
