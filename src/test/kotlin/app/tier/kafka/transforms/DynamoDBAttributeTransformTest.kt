@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.apache.kafka.connect.data.Schema
 import org.apache.kafka.connect.data.SchemaBuilder
 import org.apache.kafka.connect.data.Struct
+import org.apache.kafka.connect.errors.DataException
 import org.junit.jupiter.api.Test
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
@@ -153,6 +154,15 @@ internal class DynamoDBAttributeTransformTest {
 
         assertEquals(expected, actual.value())
         assertNull(actual.schema())
+    }
+
+    @Test
+    fun `test transform only supports composite records`() {
+        val record = SinkRecord("test", 0, null, "test", Schema.STRING_SCHEMA, "test", 0)
+
+        assertThrows(DataException::class.java) {
+            attributeTransformer.apply(record)
+        }
     }
 
     private fun givenTestDataWithSchema(): Struct {
