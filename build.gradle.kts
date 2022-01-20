@@ -31,6 +31,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.2")
     testImplementation(kotlin("test"))
 
+    // in order to make AWS STS authentication work
+    deployerJars("software.amazon.awssdk:sts:$awsSDKVersion")
     deployerJars("software.amazon.awssdk:dynamodb:$awsSDKVersion")
     deployerJars("org.apache.camel.kafkaconnector:camel-aws2-ddb-kafka-connector:$camelVersion")
     deployerJars("org.apache.camel.kafkaconnector:camel-kafka-connector:$camelVersion")
